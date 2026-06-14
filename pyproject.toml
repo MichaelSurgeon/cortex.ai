@@ -1,0 +1,40 @@
+[project]
+name = "cortex-ai"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+   "fastapi[standard]",
+   "streamlit",
+   "uvicorn",
+   "litellm",
+   "httpx",
+   "pydantic",
+   "praw", # Reddit API 
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = ["E501"]  # line too long, handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
