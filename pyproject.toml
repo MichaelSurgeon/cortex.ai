@@ -9,7 +9,12 @@ dependencies = [
    "litellm",
    "httpx",
    "pydantic",
-   "praw", # Reddit API 
+   "feedparser",
+   "beautifulsoup4>=4.15.0",
+   "cachetools>=7.1.4",
+   "openai>=2.41.1",
+   "apscheduler>=3.11.2",
+   "dotenv>=0.9.9",
 ]
 
 [dependency-groups]
