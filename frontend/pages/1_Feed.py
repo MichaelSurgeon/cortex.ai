@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from pathlib import Path
 
 import streamlit as st
 from utils.api import fetch_feed
@@ -8,8 +9,11 @@ st.set_page_config(
     page_title="Feed · Cortex AI",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
+
+_css = (Path(__file__).parent.parent / "styles" / "main.css").read_text()
+st.html(f"<style>{_css}</style>")
 
 # ── Session state ─────────────────────────────────────────────────────────────
 if "last_fetched" not in st.session_state:
@@ -20,88 +24,117 @@ if "error" not in st.session_state:
     st.session_state.error = None
 if "page" not in st.session_state:
     st.session_state.page = 0
+if "audience" not in st.session_state:
+    st.session_state.audience = "Engineer"
 
 
 def do_refresh() -> None:
-    posts, error = fetch_feed()
+    with st.spinner("Fetching latest stories…"):
+        posts, error = fetch_feed()
     st.session_state.posts = posts
     st.session_state.error = error
     st.session_state.last_fetched = datetime.now(UTC)
     st.session_state.page = 0
 
 
-# Auto-load on first visit
 if st.session_state.last_fetched is None:
     do_refresh()
 
-# ── Header ────────────────────────────────────────────────────────────────────
-col_title, col_btn = st.columns([6, 1])
+# ── Sidebar: filters, stats, refresh ─────────────────────────────────────────
+with st.sidebar:
+    st.subheader("Filters")
 
-with col_title:
-    st.title("🧠 Cortex AI")
-    st.caption("Curated AI news — filtered and summarised by GPT-4o mini")
+    search = st.text_input(
+        "Search",
+        placeholder="🔍 Search posts…",
+        label_visibility="collapsed",
+    )
 
-with col_btn:
+    all_posts: list[dict] = st.session_state.posts
+    sources = sorted({p.get("source", "unknown").lower() for p in all_posts})
+
+    st.caption("Source")
+    if len(sources) > 1:
+        filter_options = ["All"] + [s.capitalize() for s in sources]
+        selected_source = st.radio(
+            "Source", filter_options, label_visibility="collapsed"
+        )
+    else:
+        selected_source = "All"
+        st.caption("Only one source available")
+
     st.write("")
+    all_categories: list[str] = sorted(
+        {p["category"] for p in all_posts if p.get("category")}
+    )
+    st.caption("Category")
+    if all_categories:
+        cat_options = ["All"] + all_categories
+        selected_category = st.radio(
+            "Category", cat_options, label_visibility="collapsed"
+        )
+    else:
+        selected_category = "All"
+        st.caption("No categories yet")
+
+    st.divider()
+
+    st.caption("Audience")
+    st.session_state.audience = st.radio(
+        "Audience",
+        ["Engineer", "Enthusiast"],
+        index=0 if st.session_state.audience == "Engineer" else 1,
+        label_visibility="collapsed",
+        help="Engineer: technical depth. Enthusiast: plain English.",
+    )
+
+    st.divider()
+
+    if st.session_state.last_fetched:
+        age = format_age(st.session_state.last_fetched.isoformat())
+        st.metric("Stories", len(all_posts))
+        st.caption(f"Updated {age}")
+
     st.write("")
     if st.button("↺ Refresh", use_container_width=True):
         do_refresh()
         st.rerun()
 
-# ── Status bar ────────────────────────────────────────────────────────────────
-if st.session_state.last_fetched:
-    age = format_age(st.session_state.last_fetched.isoformat())
-    count = len(st.session_state.posts)
-    label = f"{count} post{'s' if count != 1 else ''}"
-    st.caption(f"{label} · updated {age}")
+# ── Apply filters ─────────────────────────────────────────────────────────────
+posts: list[dict] = st.session_state.posts
+
+if selected_source != "All":
+    posts = [p for p in posts if p.get("source", "").lower() == selected_source.lower()]
+
+if selected_category != "All":
+    posts = [p for p in posts if p.get("category") == selected_category]
+
+if search:
+    q = search.lower()
+    posts = [
+        p
+        for p in posts
+        if q in p.get("title", "").lower()
+        or q in p.get("summary", "").lower()
+        or q in p.get("author", "").lower()
+    ]
 
 # ── Error banner ──────────────────────────────────────────────────────────────
 if st.session_state.error:
-    st.error(st.session_state.error)
+    st.title("🧠 Cortex AI")
+    st.error(st.session_state.error, icon="🔌")
+    st.stop()
 
-# ── Filters ───────────────────────────────────────────────────────────────────
-posts: list[dict] = st.session_state.posts
+# ── Masthead ──────────────────────────────────────────────────────────────────
+st.title("🧠 Cortex AI")
+st.caption(datetime.now(UTC).strftime("%A, %d %B %Y") + "  ·  AI & Machine Learning")
+st.divider()
 
-sources = sorted({p.get("source", "unknown").lower() for p in posts})
-
-if len(sources) > 1:
-    filter_options = ["All"] + [s.capitalize() for s in sources]
-    selected = st.radio(
-        "Source",
-        filter_options,
-        horizontal=True,
-        label_visibility="collapsed",
-    )
-    if selected != "All":
-        posts = [p for p in posts if p.get("source", "").lower() == selected.lower()]
-else:
-    selected = "All"
-
-# ── Search ────────────────────────────────────────────────────────────────────
-if posts:
-    search = st.text_input(
-        "Search",
-        placeholder="🔍  Search by title, summary, or author…",
-        label_visibility="collapsed",
-    )
-    if search:
-        q = search.lower()
-        posts = [
-            p
-            for p in posts
-            if q in p.get("title", "").lower()
-            or q in p.get("summary", "").lower()
-            or q in p.get("author", "").lower()
-        ]
-
-st.write("")
-
-# ── Pagination ────────────────────────────────────────────────────────────────
+# ── Pagination state ──────────────────────────────────────────────────────────
 PAGE_SIZE = 10
 total = len(posts)
 total_pages = max(1, -(-total // PAGE_SIZE))  # ceil division
 
-# Reset to page 0 if filters/search pushed us out of range
 if st.session_state.page >= total_pages:
     st.session_state.page = 0
 
@@ -109,40 +142,76 @@ page_start = st.session_state.page * PAGE_SIZE
 page_posts = posts[page_start : page_start + PAGE_SIZE]
 
 # ── Feed ──────────────────────────────────────────────────────────────────────
+SOURCE_LABELS = {"reddit": "◈ Reddit", "x": "𝕏 X / Twitter"}
+CATEGORY_ICONS = {
+    "Research": "🔬",
+    "Engineering": "⚙️",
+    "Business": "💼",
+    "Policy": "⚖️",
+    "General": "📰",
+}
+
 if not posts and not st.session_state.error:
-    st.info(
-        "No posts found. Try adjusting your filters or refreshing the feed.", icon="📭"
-    )
+    all_posts_count = len(st.session_state.posts)
+    if all_posts_count == 0:
+        # Backend returned nothing — still warming up or no data yet
+        st.info(
+            "The backend is still fetching and processing posts. "
+            "This can take a few minutes on first start — hit **↺ Refresh** to check again.",
+            icon="⏳",
+        )
+    else:
+        # Posts exist but filters narrowed to zero
+        st.info("No stories match your current filters. Try adjusting them.", icon="📭")
 else:
     for post in page_posts:
+        post_id = post.get("id", "")
         title = post.get("title", "Untitled")
         url = post.get("url", "#")
-        summary = post.get("summary", "")
+        body = post.get("clean_body_text", "")
         author = post.get("author", "Unknown")
-        source = post.get("source", "unknown")
+        source = post.get("source", "unknown").lower()
         created_at = post.get("created_at", "")
 
+        summary = (
+            post.get("summary_engineer", "")
+            if st.session_state.audience == "Engineer"
+            else post.get("summary_enthusiast", "")
+        ) or ""
+
         age_str = format_age(created_at) if created_at else ""
-        source_label = {"reddit": "◈ Reddit", "x": "𝕏 X / Twitter"}.get(
-            source.lower(), source.capitalize()
+        source_label = SOURCE_LABELS.get(source, source.capitalize())
+        category = post.get("category") or "General"
+        category_icon = CATEGORY_ICONS.get(category, "📰")
+
+        first_sentence = summary.split(". ")[0].rstrip(".")
+        has_more = len(summary) > len(first_sentence) + 2
+
+        # Source · author · age above the headline (news-site convention)
+        headline = post.get("generated_title") or title
+        safe_headline = (
+            headline.replace("[", "\\[").replace("]", "\\]").replace("\n", " ").strip()
         )
 
         with st.container(border=True):
-            safe_title = (
-                title.replace("[", "\\[").replace("]", "\\]").replace("\n", " ").strip()
-            )
-            st.markdown(f"**[{safe_title}]({url})**")
+            meta_parts = [
+                f"{category_icon} **{category}**",
+                f"**{source_label}**",
+                f"👤 {author}",
+            ]
+            if age_str:
+                meta_parts.append(f"🕐 {age_str}")
+            st.caption("  ·  ".join(meta_parts))
 
-            st.write(summary)
+            st.markdown(f"##### [{safe_headline}]({url})")
+            st.caption(first_sentence + ("…" if has_more else ""))
 
-            col_meta, col_link = st.columns([5, 1])
-            with col_meta:
-                parts = [f"**{source_label}**", f"👤 {author}"]
-                if age_str:
-                    parts.append(f"🕐 {age_str}")
-                st.caption("  ·  ".join(parts))
-            with col_link:
-                st.link_button("Read →", url, use_container_width=True)
+            with st.expander("🧠 AI Summary  +  Original Post", key=f"exp_{post_id}"):
+                st.write(summary)
+                if body:
+                    st.divider()
+                    st.caption("Original Post")
+                    st.write(body[:3000] + ("…" if len(body) > 3000 else ""))
 
     # ── Pagination controls ───────────────────────────────────────────────────
     if total_pages > 1:
@@ -156,7 +225,7 @@ else:
                 st.rerun()
         with col_info:
             st.caption(
-                f"Page {st.session_state.page + 1} of {total_pages}  ·  {total} posts"
+                f"Page {st.session_state.page + 1} of {total_pages}  ·  {total} stories"
             )
         with col_next:
             if st.button(

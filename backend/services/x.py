@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 
 import httpx
@@ -5,7 +6,9 @@ import httpx
 from backend.config import GETX_API_KEY
 from backend.models.feed_schemas import FeedPost
 
-GETX_BASE_URL = "https://api.getxapi.com"  # replace with actual base URL
+logger = logging.getLogger(__name__)
+
+GETX_BASE_URL = "https://api.getxapi.com"
 SEARCH_QUERY = (
     '"artificial intelligence" OR "machine learning" OR "LLM" lang:en min_faves:50'
 )
@@ -17,6 +20,9 @@ class XService:
             base_url=GETX_BASE_URL,
             headers={"Authorization": f"Bearer {GETX_API_KEY}"},
         )
+
+    async def close(self) -> None:
+        await self._client.aclose()
 
     def _parse_tweet(self, tweet: dict) -> FeedPost:
         author = tweet.get("author", {})
@@ -42,7 +48,16 @@ class XService:
             )
             response.raise_for_status()
             data = response.json()
-            return [self._parse_tweet(tweet) for tweet in data.get("tweets", [])]
-        except Exception as e:
-            print(f"X fetch error: {e}")
+        except Exception:
+            logger.exception("X fetch failed")
             return []
+
+        posts: list[FeedPost] = []
+        for tweet in data.get("tweets", []):
+            try:
+                posts.append(self._parse_tweet(tweet))
+            except Exception:
+                logger.warning(
+                    "Skipping malformed tweet id=%s", tweet.get("id"), exc_info=True
+                )
+        return posts

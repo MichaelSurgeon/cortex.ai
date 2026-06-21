@@ -1,9 +1,19 @@
+from enum import StrEnum
+
 from pydantic import BaseModel
 
 
-class ClassificationResult(BaseModel):
+class Category(StrEnum):
+    research = "Research"
+    engineering = "Engineering"
+    business = "Business"
+    policy = "Policy"
+    general = "General"
+
+
+class ProcessingResult(BaseModel):
     is_relevant: bool
-
-
-class SummaryResult(BaseModel):
-    summary: str
+    title: str = ""
+    summary_engineer: str = ""
+    summary_enthusiast: str = ""
+    category: Category = Category.general

@@ -6,15 +6,13 @@ dependencies = [
    "fastapi[standard]",
    "streamlit",
    "uvicorn",
-   "litellm",
    "httpx",
    "pydantic",
    "feedparser",
    "beautifulsoup4>=4.15.0",
-   "cachetools>=7.1.4",
    "openai>=2.41.1",
    "apscheduler>=3.11.2",
-   "dotenv>=0.9.9",
+   "python-dotenv",
 ]
 
 [dependency-groups]
@@ -39,6 +37,9 @@ select = [
     "UP",  # pyupgrade
 ]
 ignore = ["E501"]  # line too long, handled by formatter
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
 
 [tool.ruff.format]
 quote-style = "double"

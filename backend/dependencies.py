@@ -8,7 +8,7 @@ _openai_service = OpenAIService(client=openai_client)
 _reddit_service = RedditService()
 _x_service = XService()
 _feed_service = FeedService(
-    reddit=_reddit_service,
+    reddit_service=_reddit_service,
     x_service=_x_service,
     openai_service=_openai_service,
 )
@@ -16,3 +16,7 @@ _feed_service = FeedService(
 
 def get_feed_service() -> FeedService:
     return _feed_service
+
+
+def get_x_service() -> XService:
+    return _x_service

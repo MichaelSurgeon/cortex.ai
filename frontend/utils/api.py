@@ -1,6 +1,8 @@
+import os
+
 import httpx
 
-API_BASE = "http://localhost:8000/api/v1"
+API_BASE = os.getenv("API_BASE_URL", "http://localhost:8000/api/v1")
 
 
 def fetch_feed() -> tuple[list[dict], str | None]:

@@ -1,13 +1,18 @@
+from pathlib import Path
+
 import streamlit as st
 
 st.set_page_config(
     page_title="About · Cortex AI",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
-st.title("About Cortex AI")
+_css = (Path(__file__).parent.parent / "styles" / "main.css").read_text()
+st.html(f"<style>{_css}</style>")
+
+st.title("🧠 About Cortex AI")
 st.caption("How it works and what powers it")
 
 st.divider()
@@ -26,20 +31,16 @@ col1, col2 = st.columns(2)
 with col1:
     with st.container(border=True):
         st.subheader("🔄 Data Pipeline")
-        st.markdown(
-            "- Posts are fetched every **10 minutes** via a background scheduler\n"
-            "- Reddit is pulled via the public **RSS feed** (no API key needed)\n"
-            "- Posts are cached in memory until the next refresh cycle"
-        )
+        st.write("- Posts are fetched every **10 minutes** via a background scheduler")
+        st.write("- Reddit is pulled via the public **RSS feed** (no API key needed)")
+        st.write("- Posts are cached in memory until the next refresh cycle")
 
 with col2:
     with st.container(border=True):
         st.subheader("🤖 AI Processing")
-        st.markdown(
-            "- Each post is **classified** for relevance to AI / ML engineers\n"
-            "- Relevant posts are **summarised** in one plain-English sentence\n"
-            "- Both steps use **GPT-4o mini** with structured output parsing"
-        )
+        st.write("- Each post is **classified** for relevance to AI / ML engineers")
+        st.write("- Relevant posts are **summarised** in one plain-English sentence")
+        st.write("- Both steps use **GPT-4o mini** with structured output parsing")
 
 with st.container(border=True):
     st.subheader("🛠 Tech Stack")
@@ -59,7 +60,5 @@ with st.container(border=True):
 
 with st.container(border=True):
     st.subheader("📡 Sources")
-    st.markdown(
-        "- **r/MachineLearning** — research papers, breakthroughs, discussions\n"
-        "- **r/ArtificialIntelligence** — broader AI news and commentary"
-    )
+    st.write("- **r/MachineLearning** — research papers, breakthroughs, discussions")
+    st.write("- **r/ArtificialIntelligence** — broader AI news and commentary")

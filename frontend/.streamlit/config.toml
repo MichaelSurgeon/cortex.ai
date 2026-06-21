@@ -1,0 +1,7 @@
+[theme]
+base            = "light"
+primaryColor    = "#111827"   # near-black — links, active buttons, expanders
+backgroundColor = "#FFFFFF"   # pure white
+secondaryBackgroundColor = "#F9FAFB"  # light grey — cards and sidebar
+textColor       = "#111827"   # near-black
+font            = "sans serif"

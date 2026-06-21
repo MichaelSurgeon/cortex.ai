@@ -9,17 +9,16 @@ class FeedPost(BaseModel):
     author: str
     url: HttpUrl
     created_at: datetime
+    source: str
     clean_body_text: str
-    source: str
-    summary: str | None = None
-    is_relevant: bool = True
+    generated_title: str | None = None
+    category: str | None = None
+    summary_engineer: str | None = None
+    summary_enthusiast: str | None = None
 
 
-class FeedPostResponse(BaseModel):
-    id: str
-    title: str
-    author: str
-    url: HttpUrl
-    created_at: datetime
-    source: str
-    summary: str
+class FeedPostResponse(FeedPost):
+    """API response model — summaries are guaranteed to be present after processing."""
+
+    summary_engineer: str = ""
+    summary_enthusiast: str = ""
