@@ -40,6 +40,10 @@ ignore = ["E501"]  # line too long, handled by formatter
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
+pythonpath = ["."]
+markers = [
+    "integration: calls the real OpenAI API — requires OPENAI_API_KEY (deselect with -m 'not integration')",
+]
 
 [tool.ruff.format]
 quote-style = "double"

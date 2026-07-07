@@ -29,7 +29,11 @@ PROCESSING_PROMPT = """You are an AI news aggregator assistant. Given a post tit
    - Policy: regulation, ethics, governance, legal
    - General: anything else, enthusiast or broad AI discussion
 
-If not relevant, leave all string fields as empty strings."""
+5. Rate your confidence (0.0–1.0) in the relevance decision and category assignment.
+   Use 0.9+ only when the post is clearly on-topic with an unambiguous category.
+   Use 0.5–0.7 for borderline or broad posts. Use below 0.5 sparingly.
+
+If not relevant, leave all string fields as empty strings and set confidence accordingly."""
 
 MODEL = "gpt-4o-mini"
 
@@ -73,6 +77,7 @@ class OpenAIService:
         post.summary_engineer = result.summary_engineer
         post.summary_enthusiast = result.summary_enthusiast
         post.category = result.category.value
+        post.confidence = result.confidence
         return post
 
     async def process(self, posts: list[FeedPost]) -> list[FeedPost]:

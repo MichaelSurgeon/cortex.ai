@@ -96,7 +96,7 @@ with st.sidebar:
         st.caption(f"Updated {age}")
 
     st.write("")
-    if st.button("↺ Refresh", use_container_width=True):
+    if st.button("↺ Refresh", width="stretch"):
         do_refresh()
         st.rerun()
 
@@ -164,7 +164,10 @@ if not posts and not st.session_state.error:
         # Posts exist but filters narrowed to zero
         st.info("No stories match your current filters. Try adjusting them.", icon="📭")
 else:
-    for post in page_posts:
+    col_left, col_right = st.columns(2, gap="small")
+    columns = [col_left, col_right]
+
+    for idx, post in enumerate(page_posts):
         post_id = post.get("id", "")
         title = post.get("title", "Untitled")
         url = post.get("url", "#")
@@ -187,18 +190,22 @@ else:
         first_sentence = summary.split(". ")[0].rstrip(".")
         has_more = len(summary) > len(first_sentence) + 2
 
-        # Source · author · age above the headline (news-site convention)
         headline = post.get("generated_title") or title
         safe_headline = (
             headline.replace("[", "\\[").replace("]", "\\]").replace("\n", " ").strip()
         )
 
-        with st.container(border=True):
+        with columns[idx % 2].container(border=True):
             meta_parts = [
                 f"{category_icon} **{category}**",
                 f"**{source_label}**",
                 f"👤 {author}",
             ]
+            confidence = post.get("confidence")
+            if confidence is not None:
+                pct = int(confidence * 100)
+                conf_icon = "🟢" if confidence >= 0.85 else "🟡" if confidence >= 0.65 else "🔴"
+                meta_parts.append(f"{conf_icon} {pct}%")
             if age_str:
                 meta_parts.append(f"🕐 {age_str}")
             st.caption("  ·  ".join(meta_parts))
@@ -219,7 +226,7 @@ else:
         col_prev, col_info, col_next = st.columns([1, 3, 1])
         with col_prev:
             if st.button(
-                "← Prev", disabled=st.session_state.page == 0, use_container_width=True
+                "← Prev", disabled=st.session_state.page == 0, width="stretch"
             ):
                 st.session_state.page -= 1
                 st.rerun()
@@ -231,7 +238,7 @@ else:
             if st.button(
                 "Next →",
                 disabled=st.session_state.page >= total_pages - 1,
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state.page += 1
                 st.rerun()

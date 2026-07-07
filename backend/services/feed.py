@@ -7,6 +7,8 @@ from backend.services.x import XService
 
 logger = logging.getLogger(__name__)
 
+CACHE_LIMIT = 200
+
 
 class FeedService:
     def __init__(
@@ -23,6 +25,14 @@ class FeedService:
     def fetch(self) -> list[FeedPost]:
         return self._cache
 
+    def _update_cache(self, new_posts: list[FeedPost]) -> None:
+        existing_ids = {p.id for p in new_posts}
+        retained = [p for p in self._cache if p.id not in existing_ids]
+        merged = [*new_posts, *retained]
+        merged.sort(key=lambda p: p.created_at, reverse=True)
+        self._cache = merged[:CACHE_LIMIT]
+        logger.info("Cache updated — %d posts available", len(self._cache))
+
     async def refresh(self) -> None:
         logger.info("Feed refresh started")
         try:
@@ -33,8 +43,7 @@ class FeedService:
             async for batch in self._reddit_service.fetch_batches():
                 logger.info("Processing batch of %d Reddit posts", len(batch))
                 processed_reddit.extend(await self._openai_service.process(batch))
-                self._cache = [*processed_reddit, *processed_x]
-                logger.info("Cache updated — %d posts available", len(self._cache))
+                self._update_cache([*processed_reddit, *processed_x])
 
             logger.info("Feed refresh complete — %d posts cached", len(self._cache))
         except Exception:

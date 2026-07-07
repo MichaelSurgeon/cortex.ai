@@ -9,7 +9,7 @@ from backend.models.feed_schemas import FeedPost
 
 logger = logging.getLogger(__name__)
 
-SUBREDDITS = ["MachineLearning", "ArtificialIntelligence"]
+SUBREDDITS = ["MachineLearning", "ArtificialInteligence", "artificial", "OpenAI"]
 DEFAULT_LIMIT = 25
 
 

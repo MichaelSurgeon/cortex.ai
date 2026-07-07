@@ -13,6 +13,7 @@ class FeedPost(BaseModel):
     clean_body_text: str
     generated_title: str | None = None
     category: str | None = None
+    confidence: float | None = None
     summary_engineer: str | None = None
     summary_enthusiast: str | None = None
 

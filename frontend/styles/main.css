@@ -7,7 +7,7 @@ footer {
 .block-container {
     padding-top: 2rem;
     padding-bottom: 3rem;
-    max-width: 900px;
+    max-width: 1400px;
 }
 
 /* ── Radio labels ─────────────────────────────────────────────────────────── */
@@ -15,3 +15,4 @@ footer {
 .stRadio label p {
     color: #111827 !important;
 }
+
