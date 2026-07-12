@@ -190,6 +190,7 @@ else:
         first_sentence = summary.split(". ")[0].rstrip(".")
         has_more = len(summary) > len(first_sentence) + 2
 
+        # Source · author · age above the headline (news-site convention)
         headline = post.get("generated_title") or title
         safe_headline = (
             headline.replace("[", "\\[").replace("]", "\\]").replace("\n", " ").strip()
@@ -204,7 +205,9 @@ else:
             confidence = post.get("confidence")
             if confidence is not None:
                 pct = int(confidence * 100)
-                conf_icon = "🟢" if confidence >= 0.85 else "🟡" if confidence >= 0.65 else "🔴"
+                conf_icon = (
+                    "🟢" if confidence >= 0.85 else "🟡" if confidence >= 0.65 else "🔴"
+                )
                 meta_parts.append(f"{conf_icon} {pct}%")
             if age_str:
                 meta_parts.append(f"🕐 {age_str}")

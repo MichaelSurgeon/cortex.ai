@@ -48,6 +48,25 @@ The feed refreshes automatically every 10 minutes. The first batch of posts appe
 python -m pytest tests/ -v
 ```
 
+### LLM-as-a-Judge
+
+`tests/test_llm_judge.py` runs an integration eval against a set of golden posts in `tests/golden_posts.py`. For each post it:
+
+1. Calls `OpenAIService._process_post` to generate the headline, dual summaries, and category.
+2. Sends the original post + generated summaries to a second GPT-4o-mini call acting as a judge.
+3. The judge scores four dimensions — **relevance**, **accuracy**, **tone**, and **coherence** — each on a 0–1 scale.
+4. A post passes if every dimension is ≥ 0.65. The suite passes if ≥ 85 % of posts pass.
+
+This test hits the OpenAI API and is marked `integration`, so it is skipped if `OPENAI_API_KEY` is not set.
+
+```bash
+# Run only the LLM judge eval (verbose output shows per-post scores)
+python -m pytest tests/test_llm_judge.py -v -s
+
+# Run all integration tests
+python -m pytest tests/ -v -s -m integration
+```
+
 ## Architecture
 
 - **Backend**: FastAPI + APScheduler, fetches and processes posts on a 10-minute cycle

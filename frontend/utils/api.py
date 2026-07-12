@@ -13,10 +13,7 @@ def fetch_feed() -> tuple[list[dict], str | None]:
             resp.raise_for_status()
             return resp.json(), None
     except httpx.ConnectError:
-        return [], (
-            "Cannot reach the backend. "
-            "Make sure the FastAPI server is running on `localhost:8000`."
-        )
+        return [], ("Cannot reach the backend. Make sure the FastAPI server is running")
     except httpx.TimeoutException:
         return [], (
             "Request timed out. The backend is running but may still be loading "
